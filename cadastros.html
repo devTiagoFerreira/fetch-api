@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="style.css" />
+        <title>Cadastros</title>
+        <script>
+            if (!sessionStorage.getItem('token')) {
+                location = 'index.html';
+            }
+            onload = buscaEstados();
+            onload = buscaEmpresas();
+
+            function buscaEstados() {
+                const url = 'http://localhost:8080/api/estados';
+                fetch(url)
+                    .then((res) => res.json())
+                    .then((data) => {
+                        data.estados.forEach((element) => {
+                            document.getElementById('estados').innerHTML += '<option value=' + element.id + '>' + element.nome + '</option>';
+                        });
+                    })
+                    .catch((error) => {});
+            }
+
+            function buscaCidades() {
+                document.getElementById('cidades').innerHTML = '';
+                const id_estado = document.getElementById('estados').value;
+                const url = 'http://localhost:8080/api/cidades/uf/' + id_estado;
+                fetch(url)
+                    .then((res) => res.json())
+                    .then((data) => {
+                        data.cidades.forEach((element) => {
+                            document.getElementById('cidades').innerHTML += '<option value=' + element.id + '>' + element.nome + '</option>';
+                        });
+                    })
+                    .catch((error) => {});
+            }
+
+            function cadastrar() {
+                const form = document.getElementsByTagName('input');
+                const id_cidade = document.getElementById('cidades').value;
+                const id_estado = document.getElementById('estados').value;
+
+                const url = 'http://localhost:8080/api/admin/empresas/cadastro';
+
+                let data = {};
+
+                for (let i = 0; i < form.length; i++) {
+                    data[form[i].name] = form[i].value;
+                }
+
+                data.cidade = id_cidade;
+                data.estado = id_estado;
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: new Headers({
+                        Authorization: 'Bearer ' + sessionStorage.getItem('token'),
+                        'Content-Type': 'application/json',
+                    }),
+                    body: JSON.stringify(data),
+                })
+                    .then((res) => {
+                        res.json()
+                            .then((data) => {
+                                if (res.status != 201) {
+                                    document.getElementById('alerta').innerHTML = data.erro.mensagem;
+                                } else {
+                                    document.getElementById('alerta').innerHTML = data.mensagem;
+                                    buscaEmpresas();
+                                }
+                            })
+                            .catch((error) => {});
+                    })
+                    .catch((error) => {});
+            }
+
+            function buscaEmpresas() {
+                const table = '<caption>Empresas Cadastradas</caption><tr><th>Razão Social</th><th>Nome Fantasia</th><th>Cidade</th><th>Estado</th></tr>';
+                const url = 'http://localhost:8080/api/admin/empresas';
+                fetch(url, {
+                    headers: new Headers({
+                        Authorization: 'Bearer ' + sessionStorage.getItem('token'),
+                    }),
+                })
+                    .then((res) => {
+                        res.json()
+                            .then((data) => {
+                                document.getElementById('empresas').innerHTML = table;
+                                data.empresas.forEach((element) => {
+                                    document.getElementById('empresas').innerHTML += '<tr><td>' + element.razao_social + '</td><td>' + element.nome_fantasia + '</td><td>' + element.cidade + '</td><td>' + element.estado + '</td></tr>';
+                                });
+                            })
+                            .catch((error) => {});
+                    })
+                    .catch((error) => {});
+            }
+        </script>
+    </head>
+    <body>
+        <h3>Novo Cadastro</h3>
+        <form class="cadastro" id="cadastro">
+            <input type="email" name="email" placeholder="Email" />
+            <input type="password" name="senha" placeholder="Senha" />
+            <input type="text" name="razao_social" placeholder="Razão Social" />
+            <input type="text" name="nome_fantasia" placeholder="Nome Fantasia" />
+            <input type="text" name="ie" placeholder="Iscrição Estadual" />
+            <input type="text" name="cnpj" placeholder="CNPJ" />
+            <input type="text" name="agencia" placeholder="Agência" />
+            <input type="text" name="conta" placeholder="Conta" />
+            <input type="text" name="site" placeholder="Site" />
+            <input type="text" name="cep" placeholder="Cep" />
+            <input type="text" name="logradouro" placeholder="Logradouro" />
+            <input type="text" name="numero" placeholder="Número" />
+            <input type="text" name="bairro" placeholder="Bairro" />
+            <input type="text" name="complemento" placeholder="Complemento" />
+            <select id="estados" onchange="buscaCidades()"></select>
+            <select id="cidades"></select>
+            <button type="button" onclick="cadastrar()">Casdastrar</button>
+            <div id="alerta"></div>
+        </form>
+        <table id="empresas">
+           
+        </table>
+    </body>
+</html>

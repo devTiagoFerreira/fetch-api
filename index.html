@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="style.css" />
+        <title>Clientes</title>
+        <script>
+            onload = verificaSessao();
+            
+            function verificaSessao(){
+                if(sessionStorage.getItem('token')) {
+                    location = 'cadastros.html';
+                }
+            }
+            function autenticar() {
+                const login = {
+                    email: document.getElementById('email').value,
+                    senha: document.getElementById('senha').value,
+                };
+
+                const url = 'http://localhost:8080/api/admin/login';
+
+                const data = {
+                    headers: new Headers({
+                        'Content-Type': 'application/json',
+                    }),
+                    method: 'POST',
+                    body: JSON.stringify(login),
+                };
+
+                fetch(url, data)
+                    .then((res) => {
+                        res.json()
+                            .then((data) => {
+                                if (res.status != 200) {
+                                    document.getElementById('alerta').innerHTML = data.erro.mensagem;
+                                } else {
+                                    sessionStorage.setItem('token', data.token);
+                                    location = 'cadastros.html';
+                                }
+                            })
+                            .catch((error) => {});
+                    })
+                    .catch((error) => {});
+            }
+        </script>
+    </head>
+    <body>
+        <img src="img/reis_logo.png" alt="Reis Advogados" />
+        <h4>Login</h4>
+        <form id="login">
+            <input type="email" placeholder="Email" id="email" />
+            <input type="password" placeholder="Senha" id="senha" />
+            <button type="button" onclick="autenticar()">Entrar</button>
+            <div id="alerta"></div>
+        </form>
+    </body>
+</html>
